@@ -1,7 +1,7 @@
 {
   "uuid": "forti-gnome@danialhatami.github.io",
   "name": "Forti VPN",
-  "description": "Connect to a Fortinet SSL-VPN from the top bar with one click.\nSeveral profiles, OTP support, secrets in the GNOME Keyring, safe DNS handling.\nNeeds the forti-gnome helper package (openfortivpn + a small root helper). See the project page for the install steps.",
+  "description": "Connect to a Fortinet SSL-VPN from the top bar with one click.\n\n* Several profiles: switch between accounts and gateways from the menu\n* OTP: save your secret and the code is made for you, or type it when you connect\n* Passwords and OTP secrets are kept in the GNOME Keyring\n* Safe DNS: VPN DNS first, your normal DNS stays as backup, everything restored on disconnect\n* Live connection steps and notifications\n\nNeeds openfortivpn and a small root helper (not part of this zip). Easiest: install the forti-gnome .deb package from the project page, it installs everything. Manual: sudo apt install openfortivpn ppp pkexec gir1.2-secret-1, then install the 3 helper files as shown in the project README (Manual install).\n\nNot supported: push-only 2FA and SAML/SSO logins.",
   "shell-version": [
     "45",
     "46",

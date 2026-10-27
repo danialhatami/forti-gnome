@@ -26,38 +26,60 @@ Made by [Danial Hatami](https://github.com/danialhatami).
 | A Fortinet SSL-VPN account | Gateway host, port (often 443 or 10443), username, password. Realm only if your company uses one. |
 | `sudo` rights on your computer | The helper needs root to create the VPN network interface and set DNS. |
 
-You do **not** need to install FortiClient. You also do **not** need to install `openfortivpn` by hand: the `.deb` package below installs it for you, together with `ppp`, `pkexec` and the other packages it needs.
+You do **not** need FortiClient. With Mode 1 below you also do not install `openfortivpn` by hand: the package installs it for you. With Mode 2 you install it yourself with one `apt` command.
 
 Not supported: gateways that only use push approval (for example FortiToken Mobile push) and SAML/SSO logins. The extension works with password and password + 6-digit code.
 
 ## Install
 
-The extension needs a small root helper (it starts `openfortivpn` and sets DNS), so the easiest way is the `.deb` package.
-It contains the extension and the helper.
+The extension itself is only the top-bar part. To connect, your computer also needs `openfortivpn` and a small root helper that starts it and sets DNS (this part must be installed as root, so it can not be inside the extension). You have two ways to get everything:
 
-**Option 1: ready package.** Download the `.deb` from the [releases page](https://github.com/danialhatami/forti-gnome/releases) and install it:
+### Mode 1: the `.deb` package (easiest)
+
+One package installs the extension, the helper, and all needed programs (`openfortivpn`, `ppp`, `pkexec`, ...).
+Download it from the [releases page](https://github.com/danialhatami/forti-gnome/releases/latest) and run:
 
 ```bash
 sudo apt install ./forti-gnome_*.deb
 ```
 
-**Option 2: build it yourself.**
+You can also build it yourself: `git clone https://github.com/danialhatami/forti-gnome`, then `cd forti-gnome && bash build.sh --install`.
 
-```bash
-git clone https://github.com/danialhatami/forti-gnome
-cd forti-gnome
-bash build.sh --install
-```
+### Mode 2: manual install
 
-Then log out and log in once (Wayland needs this for a new extension) and enable the extension:
+Use this if you want to see and control every step, or you do not use a `.deb` based system.
+
+1. Install the programs:
+
+   ```bash
+   sudo apt install openfortivpn ppp pkexec gir1.2-secret-1 libglib2.0-bin python3
+   ```
+
+2. Install the helper (three files, all owned by root):
+
+   ```bash
+   git clone https://github.com/danialhatami/forti-gnome
+   cd forti-gnome
+   sudo install -D -m 755 src/forti-gnome-helper /usr/libexec/forti-gnome-helper
+   sudo install -D -m 644 src/org.forti-gnome.policy /usr/share/polkit-1/actions/org.forti-gnome.policy
+   sudo install -m 755 src/forti-gnome-setup /usr/bin/forti-gnome-setup
+   ```
+
+3. Install the extension, in one of two ways:
+   - from [extensions.gnome.org](https://extensions.gnome.org) (search "Forti VPN"), or
+   - from the cloned folder: `bash build.sh --zip && gnome-extensions install --force forti-gnome@danialhatami.github.io.shell-extension.zip`
+
+To remove the manual install: delete the three files above and run `gnome-extensions uninstall forti-gnome@danialhatami.github.io`.
+
+### Enable it
+
+Log out and log in once (Wayland needs this for a new extension), then run:
 
 ```bash
 gnome-extensions enable forti-gnome@danialhatami.github.io
 ```
 
-To upgrade, install the new `.deb`. To remove it, run `sudo apt remove forti-gnome`.
-
-If you also install the extension from extensions.gnome.org, it still needs the helper from the `.deb`. Install the `.deb` first.
+You can also switch it on in the Extensions app. To upgrade the `.deb`, install the new one. To remove it, run `sudo apt remove forti-gnome`.
 
 ## First connection, step by step
 

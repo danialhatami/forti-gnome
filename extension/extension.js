@@ -328,7 +328,7 @@ class FortiIndicator extends PanelMenu.Button {
 
     _spawn() {
         if (!GLib.file_test(HELPER, GLib.FileTest.IS_EXECUTABLE))
-            throw new Error('The helper is not installed. Get the forti-gnome package from github.com/danialhatami/forti-gnome');
+            throw new Error('The helper is not installed. Install the forti-gnome .deb package, or follow "Manual install" in the project README (github.com/danialhatami/forti-gnome).');
         const proc = Gio.Subprocess.new(['pkexec', HELPER],
             Gio.SubprocessFlags.STDIN_PIPE | Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_MERGE);
         this._proc = proc;
