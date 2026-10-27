@@ -2,6 +2,10 @@
 
 The format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.4] - 2026-10-27
+
+- New shield icon (symbolic, follows the panel color) and a longer setup guide.
+
 ## [1.3] - 2026-10-25
 
 First public release.

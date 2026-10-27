@@ -8,7 +8,7 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
 UUID="forti-gnome@danialhatami.github.io"
-VERSION="${VERSION:-1.3+$(date +%Y%m%d%H%M)}"   # always newer than the previous build, so upgrades just work
+VERSION="${VERSION:-1.4+$(date +%Y%m%d%H%M)}"   # always newer than the previous build, so upgrades just work
 DEB="forti-gnome_${VERSION}_all.deb"
 
 echo "==> Checking sources"
