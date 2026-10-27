@@ -5,8 +5,6 @@
 Connect to a **Fortinet SSL-VPN** from the GNOME top bar with one click.
 It uses [openfortivpn](https://github.com/adrienverge/openfortivpn) and is much faster than the FortiClient app.
 
-Made by [Danial Hatami](https://github.com/danialhatami).
-
 ![Menu with two profiles](screenshots/menu.png)
 
 ## What you get

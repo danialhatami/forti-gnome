@@ -474,9 +474,16 @@ class FortiIndicator extends PanelMenu.Button {
         if (this._proc)
             this._sendQuit();
         this._proc = null;
-        for (const w of [this._power, this._detail, this._plist, this._plistBox])
-            w.destroy();
-        this._power = this._gear = this._detail = this._plist = this._plistBox = null;
+        this._power.destroy();
+        this._power = null;
+        this._gear.destroy();
+        this._gear = null;
+        this._detail.destroy();
+        this._detail = null;
+        this._plist.destroy();
+        this._plist = null;
+        this._plistBox.destroy();
+        this._plistBox = null;
         this._settings = null;
         super.destroy();
     }
