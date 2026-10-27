@@ -2,6 +2,11 @@
 
 The format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.5] - 2026-10-27
+
+### Fixed
+- The indicator now releases all its widgets and signals when the extension is disabled.
+
 ## [1.4] - 2026-10-27
 
 - New shield icon (symbolic, follows the panel color) and a longer setup guide.
