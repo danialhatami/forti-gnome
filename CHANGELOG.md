@@ -5,6 +5,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/).
 ## [1.4] - 2026-10-27
 
 - New shield icon (symbolic, follows the panel color) and a longer setup guide.
+- Two install modes in the README: `.deb` package or manual.
+- Cleaner shutdown: widgets and signals are released in `disable()`, the keyring schema is created on first use.
 
 ## [1.3] - 2026-10-25
 

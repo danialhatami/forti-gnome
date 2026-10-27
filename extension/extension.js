@@ -99,9 +99,9 @@ class FortiIndicator extends PanelMenu.Button {
 
         const top = new St.BoxLayout({style_class: 'forti-top'});
         top.add_child(label('FORTI VPN', 'forti-brand', {x_expand: true, y_align: CENTER}));
-        const gear = new St.Button({style_class: 'forti-gear', can_focus: true, accessible_name: 'Settings',
+        const gear = this._gear = new St.Button({style_class: 'forti-gear', can_focus: true, accessible_name: 'Settings',
             child: new St.Icon({icon_name: 'preferences-system-symbolic', icon_size: 16})});
-        gear.connect('clicked', () => {
+        this._gearId = gear.connect('clicked', () => {
             this.menu.close();
             this._ext.openPreferences();
         });
@@ -112,7 +112,7 @@ class FortiIndicator extends PanelMenu.Button {
         this._power = new St.Button({can_focus: true, x_align: CENTER, accessible_name: 'Connect or disconnect',
             child: new St.Icon({icon_name: 'system-shutdown-symbolic', style_class: 'forti-power-icon',
                 x_align: CENTER, y_align: CENTER, x_expand: true, y_expand: true})});
-        this._power.connect('clicked', () => this._onButton());
+        this._powerId = this._power.connect('clicked', () => this._onButton());
         this._status = label('', 'forti-status', {x_align: CENTER});
         this._sub = label('', 'forti-sub', {x_align: CENTER});
         this._sub.clutter_text.ellipsize = Pango.EllipsizeMode.END;
@@ -311,7 +311,11 @@ class FortiIndicator extends PanelMenu.Button {
                     return;
                 done = true;
                 this._cancelOtp = null;
-                d.connect('closed', () => d.destroy());
+                entry.clutter_text.disconnect(activateId);
+                const closedId = d.connect('closed', () => {
+                    d.disconnect(closedId);
+                    d.destroy();
+                });
                 d.close();
                 resolve(v);
             };
@@ -320,7 +324,7 @@ class FortiIndicator extends PanelMenu.Button {
                 {label: 'Cancel', action: () => finish(null), key: Clutter.KEY_Escape},
                 {label: 'Connect', default: true, action: submit},
             ]);
-            entry.clutter_text.connect('activate', submit);
+            const activateId = entry.clutter_text.connect('activate', submit);
             d.open();
             entry.grab_key_focus();
         });
@@ -464,10 +468,16 @@ class FortiIndicator extends PanelMenu.Button {
     destroy() {
         // Disabling the extension drops the VPN cleanly (the helper restores DNS and routes).
         this._settings.disconnect(this._settingsId);
+        this._power.disconnect(this._powerId);
+        this._gear.disconnect(this._gearId);
         this._cancelOtp?.();
         if (this._proc)
             this._sendQuit();
         this._proc = null;
+        for (const w of [this._power, this._detail, this._plist, this._plistBox])
+            w.destroy();
+        this._power = this._gear = this._detail = this._plist = this._plistBox = null;
+        this._settings = null;
         super.destroy();
     }
 });
