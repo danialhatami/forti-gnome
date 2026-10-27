@@ -1,0 +1,19 @@
+{
+  "uuid": "forti-gnome@danialhatami.github.io",
+  "name": "Forti VPN",
+  "description": "Connect to a Fortinet SSL-VPN from the top bar with one click.\nSeveral profiles, OTP support, secrets in the GNOME Keyring, safe DNS handling.\nNeeds the forti-gnome helper package (openfortivpn + a small root helper). See the project page for the install steps.",
+  "shell-version": [
+    "45",
+    "46",
+    "47",
+    "48",
+    "49",
+    "50"
+  ],
+  "url": "https://github.com/danialhatami/forti-gnome",
+  "session-modes": [
+    "user",
+    "unlock-dialog"
+  ],
+  "settings-schema": "org.gnome.shell.extensions.forti-gnome"
+}

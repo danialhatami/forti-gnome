@@ -1,0 +1,233 @@
+#!/usr/bin/python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Danial Hatami
+"""Root helper for the Forti GNOME extension (started through pkexec).
+
+Protocol
+  stdout: "READY" (once started), then "STATE connected", "IP x", "DNS a b|none", "LOG <line>"
+  stdin : after READY send ONE json line {host, port, realm, user, pass, otp, cert};
+          afterwards "quit" (or EOF) = disconnect.
+  `forti-gnome-helper --restore-dns` repairs /etc/resolv.conf after a hard crash.
+
+Safety
+  * credentials never in argv (visible in `ps`): 0600 config in a private dir under /run, deleted after 3s
+  * one instance at a time (flock) and refuses to run next to another openfortivpn
+  * optional /etc/forti-gnome/allowed-host (one host per line) pins the gateways (passwordless mode)
+  * DNS: the VPN may or may not push DNS.
+      - pushed: VPN DNS first, then the system DNS (a local fallback always survives;
+        glibc only reads 3 servers)
+      - not pushed: the system DNS is left untouched
+    resolv.conf is restored on every exit path.
+"""
+import fcntl, json, os, re, select, shutil, signal, subprocess, sys, tempfile, threading, time
+
+RESOLV, BAK, NEW = "/etc/resolv.conf", "/etc/resolv.conf.fortibak", "/etc/resolv.conf.fortinew"
+ALLOWED = "/etc/forti-gnome/allowed-host"
+LOCK = "/run/forti-gnome.lock"
+stop = threading.Event()
+tunnel_up = threading.Event()
+up_at = [0.0]
+dns_lock = threading.Lock()
+proc = None
+
+
+def out(kind, msg=""):
+    print(f"{kind} {msg}".rstrip(), flush=True)
+
+
+def run(*cmd):
+    try:
+        return subprocess.run(cmd, capture_output=True, text=True, timeout=10).stdout
+    except Exception:
+        return ""
+
+
+def dns_of(iface):
+    txt = run("resolvectl", "dns", iface)
+    return txt.split(":", 1)[1].split() if ":" in txt else []
+
+
+def read_resolv():
+    try:
+        with open(RESOLV) as f:
+            return [m.group(1) for m in re.finditer(r"^\s*nameserver\s+(\S+)", f.read(), re.M)]
+    except OSError:
+        return []
+
+
+def ppp_if():
+    m = re.search(r"^\d+: (ppp\d+)\s+inet ", run("ip", "-o", "-4", "addr", "show"), re.M)
+    return m.group(1) if m else None
+
+
+def restore_dns():
+    with dns_lock:
+        if os.path.lexists(BAK):
+            os.replace(BAK, RESOLV)  # puts the systemd-resolved symlink back
+            run("systemctl", "restart", "systemd-resolved")
+            out("LOG", "DNS restored")
+
+
+def terminate():
+    p = proc
+    if p and p.poll() is None:
+        p.terminate()
+        t = threading.Timer(10, lambda: p.poll() is None and p.kill())
+        t.daemon = True
+        t.start()
+
+
+def load_cfg(line):
+    c = json.loads(line)
+    host, realm = str(c["host"]), str(c.get("realm", ""))
+    port = int(c["port"])
+    user, pw, otp = str(c["user"]), str(c["pass"]), str(c.get("otp", ""))
+    cert = str(c.get("cert", "")).lower()
+    if not re.fullmatch(r"[A-Za-z0-9.\-]{1,253}", host) or not 0 < port < 65536:
+        raise ValueError("bad host/port")
+    if not re.fullmatch(r"[\w.\-]{0,64}", realm) or not re.fullmatch(r"([0-9A-Za-z]{4,16})?", otp):
+        raise ValueError("bad realm/otp")  # an empty otp is fine: the account has no 2FA
+    if not re.fullmatch(r"([0-9a-f]{64})?", cert):
+        raise ValueError("bad certificate digest (expected 64 hex characters)")
+    for v in (user, pw):
+        if not v or len(v) > 256 or re.search(r"[\r\n\0]", v):
+            raise ValueError("bad username/password")
+    if os.path.exists(ALLOWED):
+        with open(ALLOWED) as f:
+            if host not in f.read().split():
+                raise ValueError("host not in /etc/forti-gnome/allowed-host (see `forti-gnome-setup`)")
+    return host, port, realm, user, pw, otp, cert
+
+
+def dns_worker(sys_dns):
+    # VPN DNS first, system DNS second. If the VPN pushes none we do nothing at all.
+    for _ in range(90):
+        if stop.is_set():
+            return
+        vpn = dns_of(ppp_if() or "ppp0")
+        if vpn:
+            keep = sys_dns[:1]                       # at least one local server always survives
+            servers = list(dict.fromkeys(vpn[:3 - len(keep)] + keep + sys_dns[1:]))[:3]
+            with dns_lock:
+                if stop.is_set():
+                    return
+                if not os.path.lexists(BAK):
+                    if os.path.islink(RESOLV):
+                        os.symlink(os.readlink(RESOLV), BAK)
+                    else:
+                        shutil.copy2(RESOLV, BAK)
+                with open(NEW, "w") as f:
+                    f.write("".join(f"nameserver {s}\n" for s in servers) + "options timeout:2 attempts:1\n")
+                os.replace(NEW, RESOLV)
+            out("DNS", " ".join(servers))
+            return
+        if tunnel_up.is_set() and time.monotonic() - up_at[0] > 8:
+            break
+        stop.wait(1)
+    out("DNS", "none")
+    out("LOG", "INFO: the VPN pushed no DNS, system DNS left untouched")
+
+
+def tunnel_ip():
+    for _ in range(5):
+        m = re.search(r"inet (\d+\.\d+\.\d+\.\d+)", run("ip", "-o", "-4", "addr", "show", ppp_if() or "ppp0"))
+        if m:
+            return m.group(1)
+        stop.wait(0.5)
+    return ""
+
+
+def main():
+    global proc
+    if os.geteuid() != 0:
+        out("LOG", "ERROR: helper must run as root")
+        return 1
+    if sys.argv[1:] == ["--restore-dns"]:
+        restore_dns()
+        return 0
+
+    lock = open(LOCK, "w")  # held until exit
+    try:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        out("LOG", "ERROR: another Forti VPN session is already running")
+        return 1
+    if run("pidof", "openfortivpn").strip():
+        out("LOG", "ERROR: another openfortivpn is already running. Stop it first.")
+        return 1
+
+    for s in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+        signal.signal(s, lambda *_: (stop.set(), terminate()))
+
+    restore_dns()  # leftover from a crashed run
+    out("READY")
+    ready, _, _ = select.select([sys.stdin], [], [], 120)
+    line = sys.stdin.readline() if ready else ""
+    if line.strip() in ("", "quit"):
+        return 0  # cancelled before sending credentials
+    try:
+        host, port, realm, user, pw, otp, cert = load_cfg(line)
+    except Exception as e:
+        out("LOG", f"ERROR: invalid request ({e})")
+        return 1
+
+    parts = run("ip", "route", "show", "default").split()
+    sys_dns = dns_of(parts[parts.index("dev") + 1]) if "dev" in parts else []
+    sys_dns = sys_dns or read_resolv()  # never end up without a local fallback
+
+    cfgdir = tempfile.mkdtemp(prefix="forti-", dir="/run")  # 0700, root only
+    cfg = os.path.join(cfgdir, "vpn.conf")
+    fd = os.open(cfg, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, "w") as f:
+        f.write(f"host = {host}\nport = {port}\nusername = {user}\npassword = {pw}\n")
+        if otp:
+            f.write(f"otp = {otp}\n")
+        if cert:
+            f.write(f"trusted-cert = {cert}\n")
+        if realm:
+            f.write(f"realm = {realm}\n")
+        f.write("set-routes = 1\nset-dns = 1\n")
+    del pw, otp
+    cleaner = threading.Timer(3, shutil.rmtree, (cfgdir, True))
+    cleaner.daemon = True
+    cleaner.start()
+
+    def watch_stdin():
+        for l in sys.stdin:
+            if l.split()[:1] == ["quit"]:
+                break
+        stop.set()  # EOF also lands here: the shell/extension went away
+        terminate()
+    threading.Thread(target=watch_stdin, daemon=True).start()
+
+    rc = 1
+    try:
+        try:
+            proc = subprocess.Popen(["openfortivpn", "-c", cfg], stdout=subprocess.PIPE,
+                                    stderr=subprocess.STDOUT, text=True, bufsize=1)
+        except FileNotFoundError:
+            out("LOG", "ERROR: openfortivpn is not installed (sudo apt install openfortivpn)")
+            return 1
+        if stop.is_set():
+            terminate()
+        threading.Thread(target=dns_worker, args=(sys_dns,), daemon=True).start()
+        for l in proc.stdout:
+            l = l.rstrip()
+            out("LOG", l)
+            if "Tunnel is up and running" in l:
+                up_at[0] = time.monotonic()
+                tunnel_up.set()
+                out("STATE", "connected")
+                out("IP", tunnel_ip())
+        proc.wait()
+        rc = 0 if stop.is_set() else proc.returncode  # asked to stop = clean exit
+    finally:
+        stop.set()
+        terminate()
+        shutil.rmtree(cfgdir, ignore_errors=True)
+        restore_dns()
+    return rc
+
+
+if __name__ == "__main__":
+    sys.exit(main())

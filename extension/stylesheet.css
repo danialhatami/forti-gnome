@@ -1,0 +1,77 @@
+/* Forti VPN: one dark surface, no separators. Accents: green #57e389, orange #ffa348, red #ff7b63 */
+
+/* The popup itself becomes the card (no second box inside a box). */
+/* Always dark, also with a light shell theme: every layer is painted explicitly. */
+.popup-menu-boxpointer.forti-menu, .forti-menu {
+    -arrow-border-radius: 24px;
+    -arrow-background-color: #1a1a20;
+    -arrow-border-width: 1px;
+    -arrow-border-color: rgba(255,255,255,0.09);
+    -arrow-base: 0px; -arrow-rise: 0px;
+}
+.forti-menu .popup-menu-content {
+    padding: 0; background-color: #1a1a20; border-radius: 24px; border: 1px solid rgba(255,255,255,0.09);
+    box-shadow: none; color: white;
+}
+.forti-card { background-color: #1a1a20; border-radius: 24px; color: white; min-width: 330px; padding: 20px 20px 18px 20px; spacing: 18px; }
+
+/* header */
+.forti-brand { font-weight: bold; font-size: 80%; letter-spacing: 3px; color: rgba(255,255,255,0.45); }
+.forti-gear { width: 32px; height: 32px; border-radius: 16px; color: rgba(255,255,255,0.55); }
+.forti-gear:hover, .forti-gear:focus { background-color: rgba(255,255,255,0.10); color: white; }
+
+/* hero */
+.forti-hero { spacing: 8px; padding: 6px 0 2px 0; }
+.forti-power {
+    width: 96px; height: 96px; border-radius: 48px; margin-bottom: 8px;
+    background-color: rgba(255,255,255,0.06); border: 2px solid rgba(255,255,255,0.12);
+}
+.forti-power:hover, .forti-power:focus { background-color: rgba(255,255,255,0.12); }
+.forti-power:active { background-color: rgba(255,255,255,0.04); }
+.forti-power-icon { icon-size: 38px; color: rgba(255,255,255,0.70); }
+.forti-power.forti-busy { opacity: 120; }
+.forti-power.forti-connected { background-color: rgba(87,227,137,0.14); border-color: #57e389; box-shadow: 0 0 30px rgba(87,227,137,0.40); }
+.forti-power.forti-connected .forti-power-icon { color: #57e389; }
+.forti-power.forti-connecting { background-color: rgba(255,163,72,0.13); border-color: #ffa348; box-shadow: 0 0 24px rgba(255,163,72,0.32); }
+.forti-power.forti-connecting .forti-power-icon { color: #ffa348; }
+.forti-power.forti-error { background-color: rgba(255,123,99,0.12); border-color: #ff7b63; }
+.forti-power.forti-error .forti-power-icon { color: #ff7b63; }
+
+.forti-status { font-size: 130%; font-weight: bold; color: rgba(255,255,255,0.88); }
+.forti-status.forti-connected { color: #57e389; }
+.forti-status.forti-connecting { color: #ffa348; }
+.forti-status.forti-error { color: #ff7b63; }
+.forti-log { font-size: 80%; color: rgba(255,255,255,0.45); max-width: 290px; }
+.forti-sub { font-size: 88%; color: rgba(255,255,255,0.42); max-width: 280px; }
+
+.forti-error-msg { color: #ff9c8a; background-color: rgba(255,123,99,0.11); border-radius: 14px; padding: 10px 14px; }
+
+/* connection tiles */
+.forti-tiles { background-color: rgba(255,255,255,0.05); border-radius: 16px; padding: 4px 16px; }
+.forti-tile { padding: 9px 0; spacing: 16px; }
+.forti-tile-cap { font-size: 70%; font-weight: bold; letter-spacing: 1.5px; color: rgba(255,255,255,0.38); }
+.forti-tile-val { font-weight: bold; color: rgba(255,255,255,0.92); max-width: 200px; }
+
+/* profile switcher */
+.forti-plist { spacing: 8px; }
+.forti-section { font-size: 66%; font-weight: bold; letter-spacing: 2px; color: rgba(255,255,255,0.38); padding-left: 4px; }
+.forti-prows { spacing: 6px; }
+.forti-prow { border-radius: 14px; padding: 9px 12px; background-color: rgba(255,255,255,0.04); border: 1px solid transparent; }
+.forti-prow:hover, .forti-prow:focus { background-color: rgba(255,255,255,0.09); }
+.forti-prow-selected { background-color: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.20); }
+.forti-prow-dim { opacity: 90; }
+.forti-prow-name { font-weight: bold; color: rgba(255,255,255,0.92); }
+.forti-prow-host { font-size: 82%; color: rgba(255,255,255,0.42); }
+.forti-dot { width: 8px; height: 8px; border-radius: 4px; margin-right: 12px; background-color: rgba(255,255,255,0.22); }
+.forti-dot-on { background-color: #57e389; box-shadow: 0 0 8px rgba(87,227,137,0.8); }
+.forti-check { icon-size: 16px; color: rgba(255,255,255,0.75); }
+
+/* panel icon */
+.forti-icon.forti-connected { color: #57e389; }
+.forti-icon.forti-connecting { color: #ffa348; }
+.forti-icon.forti-error { color: #ff7b63; }
+
+/* OTP dialog */
+.forti-dialog-text { padding-bottom: 8px; }
+.forti-otp-bad { border-color: #ff7b63; }
+.forti-otp-entry { font-size: 140%; text-align: center; letter-spacing: 4px; padding: 8px; }

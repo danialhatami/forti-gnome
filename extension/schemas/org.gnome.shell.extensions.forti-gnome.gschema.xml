@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.forti-gnome" path="/org/gnome/shell/extensions/forti-gnome/">
+    <!-- Non-secret profile data only (JSON list of {id,name,host,port,realm,username}).
+         Passwords and OTP secrets live in the GNOME Keyring. -->
+    <key name="profiles" type="s"><default>"[]"</default><summary>Profiles (JSON)</summary></key>
+    <key name="selected" type="s"><default>""</default><summary>Selected profile id</summary></key>
+  </schema>
+</schemalist>

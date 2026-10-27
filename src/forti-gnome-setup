@@ -1,0 +1,50 @@
+#!/bin/bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Danial Hatami
+# forti-gnome-setup: small admin tool for the Forti VPN GNOME extension.
+set -euo pipefail
+
+RULE=/etc/polkit-1/rules.d/49-forti-gnome.rules
+ALLOWED=/etc/forti-gnome/allowed-host
+HELPER=/usr/libexec/forti-gnome-helper
+
+usage() {
+    cat >&2 <<USAGE
+Usage: forti-gnome-setup <command>
+  status                    show current mode
+  passwordless <host>...    connect without the admin password prompt, but ONLY to the given gateways
+  ask                       ask for your password when connecting (default, safer)
+  restore-dns               repair /etc/resolv.conf after a crash
+USAGE
+    exit 1
+}
+
+[ $# -ge 1 ] || usage
+cmd=$1; shift
+[ "$cmd" = status ] || [ "$(id -u)" -eq 0 ] || exec sudo "$0" "$cmd" "$@"
+
+case "$cmd" in
+    status)
+        if [ -e "$RULE" ]; then echo "mode: passwordless (hosts: $(tr '\n' ' ' < "$ALLOWED"))"
+        else echo "mode: ask for password"; fi ;;
+    passwordless)
+        [ $# -ge 1 ] || { echo "give at least one gateway host, e.g. vpn.example.com" >&2; exit 1; }
+        for h in "$@"; do
+            [[ "$h" =~ ^[A-Za-z0-9.-]{1,253}$ ]] || { echo "invalid host: $h" >&2; exit 1; }
+        done
+        mkdir -p /etc/forti-gnome
+        printf '%s\n' "$@" > "$ALLOWED"
+        cat > "$RULE" <<'RULE'
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.forti-gnome.connect" && subject.local && subject.active)
+        return polkit.Result.YES;
+});
+RULE
+        echo "passwordless enabled for: $*" ;;
+    ask)
+        rm -f "$RULE" "$ALLOWED"
+        echo "password prompt enabled" ;;
+    restore-dns)
+        exec "$HELPER" --restore-dns ;;
+    *) usage ;;
+esac

@@ -1,0 +1,22 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  build-and-test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y libglib2.0-bin nodejs shellcheck
+      - name: Check JavaScript syntax
+        run: |
+          for f in extension/*.js; do cp "$f" /tmp/check.mjs; node --check /tmp/check.mjs; done
+      - name: ShellCheck
+        run: shellcheck -S warning build.sh src/forti-gnome-setup debian/postinst debian/prerm debian/postrm
+      - name: Build the .deb
+        run: bash build.sh
+      - name: Helper tests (this runner is a throw-away VM)
+        run: sudo FORTI_TEST_DESTRUCTIVE=1 python3 tests/test_helper.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deb
+          path: "*.deb"

@@ -1,0 +1,11 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Danial Hatami
+set -e
+case "$1" in
+    remove|purge)
+        rm -f /usr/share/gnome-shell/extensions/forti-gnome@danialhatami.github.io/schemas/gschemas.compiled
+        rm -f /etc/polkit-1/rules.d/49-forti-gnome.rules
+        rm -rf /etc/forti-gnome ;;
+esac
+exit 0

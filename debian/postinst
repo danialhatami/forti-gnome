@@ -1,0 +1,9 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Danial Hatami
+set -e
+if [ "$1" = configure ]; then
+    glib-compile-schemas /usr/share/gnome-shell/extensions/forti-gnome@danialhatami.github.io/schemas
+    echo "forti-gnome installed. Log out/in once, then run: gnome-extensions enable forti-gnome@danialhatami.github.io"
+fi
+exit 0

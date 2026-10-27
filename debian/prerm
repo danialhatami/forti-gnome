@@ -1,0 +1,12 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Danial Hatami
+set -e
+case "$1" in
+    remove|upgrade|deconfigure)
+        # never leave a half-restored DNS config behind
+        if [ -e /etc/resolv.conf.fortibak ]; then
+            /usr/libexec/forti-gnome-helper --restore-dns || true
+        fi ;;
+esac
+exit 0
