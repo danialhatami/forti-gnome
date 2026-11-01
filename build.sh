@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 Danial Hatami
 # Builds forti-gnome_<version>_all.deb.   bash build.sh            -> just build
-#                                         bash build.sh --zip      -> extension zip for extensions.gnome.org
+#                                         bash build.sh --zip      -> extension zip
 #                                         bash build.sh --install  -> build + install/upgrade
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
@@ -42,7 +42,7 @@ Description: Fortinet VPN indicator for GNOME Shell
  tunnel and DNS and restores them on disconnect.
 EOF
 
-if [ "${1:-}" = "--zip" ]; then   # the file you upload to extensions.gnome.org (no compiled schema, no extras)
+if [ "${1:-}" = "--zip" ]; then   # the extension zip (no compiled schema, no extras)
     ZIP="$PWD/${UUID}.shell-extension.zip"
     rm -f "$ZIP"
     (cd extension && zip -q -r "$ZIP" . -x '*.compiled')

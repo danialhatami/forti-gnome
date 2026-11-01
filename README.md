@@ -63,9 +63,11 @@ Use this if you want to see and control every step, or you do not use a `.deb` b
    sudo install -m 755 src/forti-gnome-setup /usr/bin/forti-gnome-setup
    ```
 
-3. Install the extension, in one of two ways:
-   - from [extensions.gnome.org](https://extensions.gnome.org) (search "Forti VPN"), or
-   - from the cloned folder: `bash build.sh --zip && gnome-extensions install --force forti-gnome@danialhatami.github.io.shell-extension.zip`
+3. Install the extension from the cloned folder:
+
+   ```bash
+   bash build.sh --zip && gnome-extensions install --force forti-gnome@danialhatami.github.io.shell-extension.zip
+   ```
 
 To remove the manual install: delete the three files above and run `gnome-extensions uninstall forti-gnome@danialhatami.github.io`.
 
@@ -140,7 +142,7 @@ There is no auto-reconnect on purpose. Many failed logins in a row can lock a Fo
 
 ```bash
 bash build.sh                                                # check the sources and build the .deb
-bash build.sh --zip                                          # zip for extensions.gnome.org
+bash build.sh --zip                                          # build the extension zip
 sudo FORTI_TEST_DESTRUCTIVE=1 python3 tests/test_helper.py   # only in a throw-away VM or container
 ```
 
